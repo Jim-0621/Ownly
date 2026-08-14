@@ -43,7 +43,7 @@ export default function AssetEditor() {
     const price = Number(purchasePrice)
     if (!name.trim()) return setError('请输入物品名称')
     if (!purchaseDate) return setError('请选择购买日期')
-    if (!Number.isFinite(price) || price < 0) return setError('请输入正确的购买价格')
+    if (!Number.isFinite(price) || price <= 0) return setError('购买价格必须大于 0')
     if (status !== 'using' && (!statusDate || statusDate < purchaseDate || statusDate > today())) {
       return setError(`${status === 'sold' ? '售出' : '退役'}日期应在购买日期和今天之间`)
     }
