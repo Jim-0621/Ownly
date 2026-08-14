@@ -6,7 +6,7 @@ import { AssetCard, EmptyState } from '../components'
 import { db } from '../db'
 import { SelectControl } from '../SelectControl'
 import type { Asset, AssetExpense, Category } from '../types'
-import { dailyCost, money, ownedDays } from '../utils'
+import { dailyCost, money, netCost, ownedDays } from '../utils'
 
 type ViewMode = 'status' | 'category'
 type Sort = 'value' | 'days' | 'daily'
@@ -56,8 +56,8 @@ export default function Home() {
     })
   }, [assets, expenses, filter, query, sort, sortDirection, viewMode])
 
-  const totalAsset = assets.filter((item) => item.status !== 'sold').reduce((sum, item) => sum + item.purchasePrice, 0)
-  const totalDaily = assets.filter((item) => item.status !== 'sold').reduce((sum, item) => sum + dailyCost(item, expenses), 0)
+  const totalAsset = assets.reduce((sum, item) => sum + netCost(item, expenses), 0)
+  const totalDaily = assets.reduce((sum, item) => sum + dailyCost(item, expenses), 0)
   const categoryMap = new Map(categories.map((category) => [category.id, category]))
   const filterOptions = viewMode === 'status'
     ? statusFilters

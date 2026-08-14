@@ -314,7 +314,7 @@ button { border: 0; background: none; color: inherit; }
 .profile-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .profile-meta button { padding: 5px 9px; border-radius: 9px; color: #fff; background: rgba(255,255,255,.12); font-size: 11px; }
 .sync-warning { grid-column: 1 / -1; padding: 12px 15px; border-radius: 12px; color: #9a5c00; background: #fff6dc; font-size: 13px; }
-.last-sync-time { grid-column: 1 / -1; margin: -7px 2px 0; color: #979fac; text-align: right; font-size: 11px; }
+.last-sync-time { grid-column: 1 / -1; margin: 6px 2px 0; color: #979fac; text-align: right; font-size: 11px; }
 
 @media (max-width: 420px) {
   .home-page, .standard-page, .sub-page { padding-left: 13px; padding-right: 13px; }
@@ -494,6 +494,7 @@ button { border: 0; background: none; color: inherit; }
     gap: 18px;
   }
   .settings-page > .standard-header, .settings-page > .profile-card, .settings-page > .message-banner, .settings-page > .sync-warning, .settings-page > .last-sync-time, .settings-page > .version-label { grid-column: 1 / -1; }
+  .settings-page > .last-sync-time { margin-top: -7px; }
   .settings-page > .settings-card { grid-column: 1 / -1; margin-top: 0; min-height: 100%; }
   .profile-card { padding: 23px 26px; }
 
