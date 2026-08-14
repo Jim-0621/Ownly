@@ -32,11 +32,11 @@ function sanitizeAsset(asset: Asset | LegacyAsset) {
 function defaultCategories(createdAt = new Date().toISOString()): Category[] {
   return [
     { id: 'digital', name: '数码', icon: '📱', color: '#1d82ff', createdAt },
-    { id: 'home', name: '家居', icon: '🏠', color: '#7c5cff', createdAt },
     { id: 'appliance', name: '家电', icon: '🧺', color: '#00a77b', createdAt },
+    { id: 'home', name: '家居', icon: '🏠', color: '#7c5cff', createdAt },
     { id: 'clothing', name: '服饰穿戴', icon: '👕', color: '#ff7a59', createdAt },
+    { id: 'office', name: '办公兴趣', icon: '📚', color: '#c17a18', createdAt },
     { id: 'travel', name: '出行', icon: '🚗', color: '#00a6c8', createdAt },
-    { id: 'office', name: '办公与兴趣', icon: '📚', color: '#c17a18', createdAt },
     { id: 'other', name: '其他', icon: '📦', color: '#7b8496', createdAt },
   ]
 }
@@ -75,6 +75,12 @@ class OwnlyDatabase extends Dexie {
     ))
     this.version(4).stores(databaseStoresWithExpenses)
     this.version(5).stores(databaseStoresWithExpenses).upgrade(async (transaction) => {
+      const categories = transaction.table('categories')
+      const currentCategories = await categories.toArray() as Category[]
+      await categories.clear()
+      await categories.bulkAdd(withDefaultCategories(currentCategories))
+    })
+    this.version(6).stores(databaseStoresWithExpenses).upgrade(async (transaction) => {
       const categories = transaction.table('categories')
       const currentCategories = await categories.toArray() as Category[]
       await categories.clear()

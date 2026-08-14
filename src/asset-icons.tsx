@@ -95,22 +95,8 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
-    categoryId: 'travel',
-    name: '出行',
-    icons: [
-      { key: 'car', label: '汽车', icon: Car },
-      { key: 'bike', label: '自行车', icon: Bike },
-      { key: 'plane', label: '飞机', icon: Plane },
-      { key: 'ship', label: '船只', icon: Ship },
-      { key: 'train', label: '火车', icon: TrainFront },
-      { key: 'bus', label: '公交车', icon: BusFront },
-      { key: 'fuel', label: '车用物品', icon: Fuel },
-      { key: 'location', label: '旅行装备', icon: MapPinned },
-    ],
-  },
-  {
     categoryId: 'office',
-    name: '办公与兴趣',
+    name: '办公兴趣',
     icons: [
       { key: 'book', label: '书籍', icon: BookOpen },
       { key: 'notebook', label: '笔记本', icon: NotebookPen },
@@ -124,6 +110,20 @@ export const assetIconGroups: AssetIconGroup[] = [
       { key: 'wrench', label: '维修工具', icon: Wrench },
       { key: 'hammer', label: '手工具', icon: Hammer },
       { key: 'store', label: '店铺用品', icon: Store },
+    ],
+  },
+  {
+    categoryId: 'travel',
+    name: '出行',
+    icons: [
+      { key: 'car', label: '汽车', icon: Car },
+      { key: 'bike', label: '自行车', icon: Bike },
+      { key: 'plane', label: '飞机', icon: Plane },
+      { key: 'ship', label: '船只', icon: Ship },
+      { key: 'train', label: '火车', icon: TrainFront },
+      { key: 'bus', label: '公交车', icon: BusFront },
+      { key: 'fuel', label: '车用物品', icon: Fuel },
+      { key: 'location', label: '旅行装备', icon: MapPinned },
     ],
   },
   {
@@ -151,8 +151,8 @@ const categoryDefaults: Record<string, string> = {
   home: 'sofa',
   appliance: 'washer',
   clothing: 'shirt',
-  travel: 'car',
   office: 'book',
+  travel: 'car',
   other: 'box',
 }
 
