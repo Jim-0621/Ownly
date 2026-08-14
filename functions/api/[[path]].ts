@@ -9,6 +9,7 @@ interface CloudSnapshot {
   categories: unknown[]
   assets: unknown[]
   wishes: unknown[]
+  expenses?: unknown[]
 }
 
 const MAX_REQUEST_CHARS = 750_000
@@ -41,6 +42,7 @@ function validSnapshot(value: unknown): value is CloudSnapshot {
   if (!value || typeof value !== 'object') return false
   const snapshot = value as Partial<CloudSnapshot>
   if (!Array.isArray(snapshot.categories) || !Array.isArray(snapshot.assets) || !Array.isArray(snapshot.wishes)) return false
+  if (snapshot.expenses !== undefined && !Array.isArray(snapshot.expenses)) return false
   return true
 }
 

@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Check, Plus, Trash2, X } from 'lucide-react'
 import { defaultAssetIcon } from '../asset-icons'
 import { db } from '../db'
+import { SelectControl } from '../SelectControl'
 import { money, today, uid } from '../utils'
 
 const priorityMeta = {
@@ -60,7 +61,7 @@ export default function Wishlist() {
         <label className="field"><span>想要什么</span><input autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：降噪耳机" /></label>
         <div className="field-grid">
           <label className="field"><span>预计价格</span><input inputMode="decimal" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="0.00" /></label>
-          <label className="field"><span>分类</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>{categories.map((item) => <option key={item.id} value={item.id}>{item.icon} {item.name}</option>)}</select></label>
+          <div className="field"><span>分类</span><SelectControl value={categoryId} options={categories.map((item) => ({ value: item.id, label: item.name }))} onChange={setCategoryId} ariaLabel="心愿分类" /></div>
         </div>
         <div className="priority-picker">{(Object.keys(priorityMeta) as Array<keyof typeof priorityMeta>).map((value) => <button type="button" key={value} className={priority === value ? 'active' : ''} onClick={() => setPriority(value)}>{priorityMeta[value].label}</button>)}</div>
         <button className="primary-button wide">保存心愿</button>

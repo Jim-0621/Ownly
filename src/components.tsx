@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { AssetIcon, normalizeAssetIcon } from './asset-icons'
 import { useAuth } from './auth-context'
 import { useCloudSync } from './sync-context'
-import type { Asset, Category } from './types'
+import type { Asset, AssetExpense, Category } from './types'
 import { dailyCost, money, ownedDays, statusMeta } from './utils'
 
 const navItems = [
@@ -42,7 +42,7 @@ export function AppLayout() {
   )
 }
 
-export function AssetCard({ asset, category }: { asset: Asset; category?: Category }) {
+export function AssetCard({ asset, category, expenses = [] }: { asset: Asset; category?: Category; expenses?: AssetExpense[] }) {
   const status = statusMeta[asset.status]
   return (
     <Link to={`/assets/${asset.id}`} className="asset-card">
@@ -51,7 +51,7 @@ export function AssetCard({ asset, category }: { asset: Asset; category?: Catego
       </div>
       <div className="asset-main">
         <strong>{asset.name}</strong>
-        <span>{money(asset.purchasePrice)} · {money(dailyCost(asset))}/天</span>
+        <span>{money(asset.purchasePrice)} · {money(dailyCost(asset, expenses))}/天</span>
       </div>
       <div className="asset-days">
         <strong>{ownedDays(asset)}</strong><span>天</span>

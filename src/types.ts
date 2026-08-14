@@ -24,6 +24,17 @@ export interface Asset {
   updatedAt: string
 }
 
+export interface AssetExpense {
+  id: string
+  assetId: string
+  name: string
+  amount: number
+  date: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface WishItem {
   id: string
   name: string

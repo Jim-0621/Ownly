@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { normalizeAssetIcon } from './asset-icons'
-import type { Asset, Category, WishItem } from './types'
+import type { Asset, AssetExpense, Category, WishItem } from './types'
 
 const legacyDatabaseStores = {
   assets: 'id, name, categoryId, status, favorite, purchaseDate, createdAt',
@@ -11,6 +11,11 @@ const legacyDatabaseStores = {
 const databaseStores = {
   ...legacyDatabaseStores,
   assets: 'id, name, categoryId, status, purchaseDate, createdAt',
+}
+
+const databaseStoresWithExpenses = {
+  ...databaseStores,
+  expenses: 'id, assetId, date, createdAt',
 }
 
 type LegacyAsset = Omit<Asset, 'status'> & { image?: unknown; favorite?: unknown; status: Asset['status'] | 'stored' }
@@ -38,6 +43,7 @@ class OwnlyDatabase extends Dexie {
   assets!: EntityTable<Asset, 'id'>
   categories!: EntityTable<Category, 'id'>
   wishes!: EntityTable<WishItem, 'id'>
+  expenses!: EntityTable<AssetExpense, 'id'>
 
   constructor() {
     super('ownly-database')
@@ -55,6 +61,7 @@ class OwnlyDatabase extends Dexie {
         asset.icon = normalizeAssetIcon(asset.icon, asset.categoryId)
       })
     ))
+    this.version(4).stores(databaseStoresWithExpenses)
 
     this.on('populate', () => {
       void this.categories.bulkAdd(defaultCategories())
@@ -65,19 +72,20 @@ class OwnlyDatabase extends Dexie {
 export const db = new OwnlyDatabase()
 
 export async function resetLocalData() {
-  await db.transaction('rw', db.categories, db.assets, db.wishes, async () => {
-    await Promise.all([db.categories.clear(), db.assets.clear(), db.wishes.clear()])
+  await db.transaction('rw', db.categories, db.assets, db.wishes, db.expenses, async () => {
+    await Promise.all([db.categories.clear(), db.assets.clear(), db.wishes.clear(), db.expenses.clear()])
     await db.categories.bulkAdd(defaultCategories())
   })
 }
 
 export async function exportData() {
   return {
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     categories: await db.categories.toArray(),
     assets: (await db.assets.toArray()).map(sanitizeAsset),
     wishes: await db.wishes.toArray(),
+    expenses: await db.expenses.toArray(),
   }
 }
 
@@ -86,18 +94,21 @@ export async function importData(value: unknown) {
     categories?: Category[]
     assets?: Asset[]
     wishes?: WishItem[]
+    expenses?: AssetExpense[]
   }
-  if (!Array.isArray(data.categories) || !Array.isArray(data.assets) || !Array.isArray(data.wishes)) {
+  if (!Array.isArray(data.categories) || !Array.isArray(data.assets) || !Array.isArray(data.wishes) || (data.expenses !== undefined && !Array.isArray(data.expenses))) {
     throw new Error('备份文件格式不正确')
   }
   const categories = data.categories
   const assets = data.assets.map(sanitizeAsset)
   const wishes = data.wishes
+  const expenses = data.expenses ?? []
 
-  await db.transaction('rw', db.categories, db.assets, db.wishes, async () => {
-    await Promise.all([db.categories.clear(), db.assets.clear(), db.wishes.clear()])
+  await db.transaction('rw', db.categories, db.assets, db.wishes, db.expenses, async () => {
+    await Promise.all([db.categories.clear(), db.assets.clear(), db.wishes.clear(), db.expenses.clear()])
     await db.categories.bulkAdd(categories)
     await db.assets.bulkAdd(assets)
     await db.wishes.bulkAdd(wishes)
+    await db.expenses.bulkAdd(expenses)
   })
 }

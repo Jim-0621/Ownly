@@ -1,4 +1,4 @@
-import type { Asset, AssetStatus } from './types'
+import type { Asset, AssetExpense, AssetStatus } from './types'
 
 export const statusMeta: Record<AssetStatus, { label: string; color: string }> = {
   using: { label: '使用中', color: '#20c997' },
@@ -29,12 +29,16 @@ export function ownedDays(asset: Asset) {
   return daysInclusive(asset.purchaseDate, assetEndDate(asset))
 }
 
-export function netCost(asset: Asset) {
-  return Math.max(0, asset.purchasePrice - (asset.salePrice ?? 0))
+export function expenseTotal(assetId: string, expenses: AssetExpense[]) {
+  return expenses.reduce((sum, expense) => expense.assetId === assetId ? sum + expense.amount : sum, 0)
 }
 
-export function dailyCost(asset: Asset) {
-  return netCost(asset) / ownedDays(asset)
+export function netCost(asset: Asset, expenses: AssetExpense[] = []) {
+  return Math.max(0, asset.purchasePrice + expenseTotal(asset.id, expenses) - (asset.salePrice ?? 0))
+}
+
+export function dailyCost(asset: Asset, expenses: AssetExpense[] = []) {
+  return netCost(asset, expenses) / ownedDays(asset)
 }
 
 export function money(value: number, maximumFractionDigits = 2) {

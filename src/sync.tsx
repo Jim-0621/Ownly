@@ -11,6 +11,7 @@ function contentKey(snapshot: Snapshot) {
     categories: snapshot.categories,
     assets: snapshot.assets,
     wishes: snapshot.wishes,
+    expenses: snapshot.expenses,
   })
 }
 

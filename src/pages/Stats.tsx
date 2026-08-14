@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { db } from '../db'
-import { dailyCost, money, today } from '../utils'
-import type { Asset, Category } from '../types'
+import { dailyCost, daysInclusive, money, today } from '../utils'
+import type { Asset, AssetExpense, Category } from '../types'
 
 type Range = 'week' | 'month' | 'year' | 'all'
 const EMPTY_ASSETS: Asset[] = []
+const EMPTY_EXPENSES: AssetExpense[] = []
 const EMPTY_CATEGORIES: Category[] = []
 
 function dateKey(date: Date) {
@@ -22,7 +23,7 @@ function rangeStart(range: Range) {
   return dateKey(date)
 }
 
-function trendData(assets: Asset[], range: Range) {
+function trendData(assets: Asset[], expenses: AssetExpense[], range: Range) {
   const end = new Date(`${today()}T00:00:00`).getTime()
   const first = range === 'all' && assets.length
     ? Math.min(...assets.map((asset) => new Date(`${asset.purchaseDate}T00:00:00`).getTime()), end)
@@ -33,8 +34,14 @@ function trendData(assets: Asset[], range: Range) {
     const key = dateKey(date)
     const active = assets.filter((asset) => asset.purchaseDate <= key)
     const cost = active.reduce((sum, asset) => {
-      const days = Math.max(1, Math.floor((timestamp - new Date(`${asset.purchaseDate}T00:00:00`).getTime()) / 86_400_000) + 1)
-      return sum + asset.purchasePrice / days
+      const expenseAdjustment = expenses.reduce((total, expense) => (
+        expense.assetId === asset.id && expense.date <= key ? total + expense.amount : total
+      ), 0)
+      const saleOffset = asset.saleDate && asset.saleDate <= key ? asset.salePrice ?? 0 : 0
+      const endDate = asset.status === 'sold' && asset.saleDate && asset.saleDate <= key ? asset.saleDate
+        : asset.status === 'retired' && asset.retiredDate && asset.retiredDate <= key ? asset.retiredDate
+          : key
+      return sum + Math.max(0, asset.purchasePrice + expenseAdjustment - saleOffset) / daysInclusive(asset.purchaseDate, endDate)
     }, 0)
     return { date: `${date.getMonth() + 1}/${date.getDate()}`, cost: Number(cost.toFixed(2)) }
   })
@@ -42,14 +49,15 @@ function trendData(assets: Asset[], range: Range) {
 
 export default function Stats() {
   const assets = useLiveQuery(() => db.assets.toArray(), []) ?? EMPTY_ASSETS
+  const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? EMPTY_EXPENSES
   const categories = useLiveQuery(() => db.categories.toArray(), []) ?? EMPTY_CATEGORIES
   const [range, setRange] = useState<Range>('all')
   const periodAssets = assets.filter((asset) => asset.purchaseDate >= rangeStart(range))
   const purchases = periodAssets.reduce((sum, asset) => sum + asset.purchasePrice, 0)
   const sold = periodAssets.filter((asset) => asset.status === 'sold')
   const sales = sold.reduce((sum, asset) => sum + (asset.salePrice ?? 0), 0)
-  const totalDaily = assets.reduce((sum, asset) => sum + dailyCost(asset), 0)
-  const trend = useMemo(() => trendData(assets, range), [assets, range])
+  const totalDaily = assets.reduce((sum, asset) => sum + dailyCost(asset, expenses), 0)
+  const trend = useMemo(() => trendData(assets, expenses, range), [assets, expenses, range])
   const categoryData = categories.map((category) => ({
     name: category.name,
     value: assets.filter((asset) => asset.categoryId === category.id).reduce((sum, asset) => sum + asset.purchasePrice, 0),

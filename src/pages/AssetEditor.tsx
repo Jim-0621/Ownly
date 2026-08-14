@@ -3,7 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Check } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AssetIcon, AssetIconPicker, defaultAssetIcon, normalizeAssetIcon } from '../asset-icons'
+import { DatePicker } from '../DatePicker'
 import { db } from '../db'
+import { SelectControl } from '../SelectControl'
 import type { AssetStatus, Category } from '../types'
 import { today, uid } from '../utils'
 
@@ -67,12 +69,12 @@ export default function AssetEditor() {
         <div className="asset-icon-preview"><AssetIcon name={icon} size={58} /><span>当前物品图标</span></div>
         <label className="field"><span>物品名称</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：iPhone 17" maxLength={40} /></label>
         <div className="field-grid">
-          <label className="field"><span>分类</span><select value={categoryId} onChange={(event) => { const nextCategoryId = event.target.value; setCategoryId(nextCategoryId); setIcon(defaultAssetIcon(nextCategoryId)) }}>{categories.map((item) => <option key={item.id} value={item.id}>{item.icon} {item.name}</option>)}</select></label>
-          <label className="field"><span>状态</span><select value={status} onChange={(event) => setStatus(event.target.value as AssetStatus)}><option value="using">使用中</option><option value="sold">已售出</option><option value="retired">已退役</option></select></label>
+          <div className="field"><span>分类</span><SelectControl value={categoryId} options={categories.map((item) => ({ value: item.id, label: item.name }))} onChange={(nextCategoryId) => { setCategoryId(nextCategoryId); setIcon(defaultAssetIcon(nextCategoryId)) }} ariaLabel="物品分类" /></div>
+          <div className="field"><span>状态</span><SelectControl value={status} options={[{ value: 'using', label: '使用中' }, { value: 'sold', label: '已售出' }, { value: 'retired', label: '已退役' }]} onChange={(value) => setStatus(value as AssetStatus)} ariaLabel="物品状态" /></div>
         </div>
         <AssetIconPicker categoryId={categoryId} value={icon} onChange={setIcon} />
         <div className="field-grid">
-          <label className="field"><span>购买日期</span><input type="date" value={purchaseDate} max={today()} onChange={(event) => setPurchaseDate(event.target.value)} /></label>
+          <div className="field"><span>购买日期</span><DatePicker value={purchaseDate} max={today()} onChange={setPurchaseDate} ariaLabel="购买日期" /></div>
           <label className="field"><span>购买价格</span><div className="money-input"><b>¥</b><input inputMode="decimal" value={purchasePrice} onChange={(event) => setPurchasePrice(event.target.value)} placeholder="0.00" /></div></label>
         </div>
         <label className="field"><span>备注</span><textarea value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="购买渠道、型号、保修信息……" rows={4} maxLength={500} /></label>
