@@ -20,10 +20,10 @@ export default function App() {
             <Route path="/stats" element={<Stats />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/assets/new" element={<AssetEditor />} />
+            <Route path="/assets/:id" element={<AssetDetail />} />
+            <Route path="/assets/:id/edit" element={<AssetEditor />} />
           </Route>
-          <Route path="/assets/new" element={<AssetEditor />} />
-          <Route path="/assets/:id" element={<AssetDetail />} />
-          <Route path="/assets/:id/edit" element={<AssetEditor />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

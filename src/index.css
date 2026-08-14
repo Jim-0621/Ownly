@@ -20,6 +20,6 @@ img { max-width: 100%; display: block; }
 #root { min-height: 100vh; }
 
 @media (min-width: 760px) {
-  body { padding: 24px 0; }
-  #root { max-width: 680px; margin: 0 auto; border-radius: 34px; overflow: hidden; box-shadow: 0 20px 70px rgba(29, 45, 76, .16); }
+  body { padding: 0; }
+  #root { max-width: none; margin: 0; border-radius: 0; overflow: visible; box-shadow: none; }
 }

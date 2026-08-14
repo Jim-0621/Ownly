@@ -1,5 +1,5 @@
 import { BarChart3, Box, Heart, Settings2 } from 'lucide-react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import type { Asset, Category } from './types'
 import { dailyCost, money, ownedDays, statusMeta } from './utils'
 
@@ -11,16 +11,22 @@ const navItems = [
 ]
 
 export function AppLayout() {
+  const isAssetRoute = useLocation().pathname.startsWith('/assets/')
   return (
-    <div className="app-shell">
+    <div className={isAssetRoute ? 'app-shell asset-route-shell' : 'app-shell'}>
       <main className="page-container"><Outlet /></main>
-      <nav className="bottom-nav" aria-label="主导航">
+      <nav className={isAssetRoute ? 'bottom-nav asset-route-nav' : 'bottom-nav'} aria-label="主导航">
+        <div className="nav-brand" aria-label="Ownly 个人资产管理">
+          <div className="nav-brand-mark">O</div>
+          <div><strong>Ownly</strong><span>个人资产管理</span></div>
+        </div>
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
             <Icon size={23} strokeWidth={2.5} />
             <span>{label}</span>
           </NavLink>
         ))}
+        <div className="nav-footer"><i />本地数据已启用</div>
       </nav>
     </div>
   )
