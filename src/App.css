@@ -132,11 +132,17 @@ button { border: 0; background: none; color: inherit; }
 .date-trigger-icon { flex: 0 0 auto; color: #748096; }
 .date-trigger .date-value { flex: 1; }
 .date-menu { position: absolute; z-index: 60; top: calc(100% + 7px); left: 0; width: min(330px, calc(100vw - 42px)); padding: 13px; border: 1px solid #e0e5ed; border-radius: 18px; color: #303642; background: rgba(255,255,255,.98); box-shadow: 0 16px 36px rgba(35,51,81,.18), 0 3px 10px rgba(35,51,81,.08); }
-.date-menu-header { min-height: 38px; display: grid; grid-template-columns: 38px 1fr 38px; align-items: center; margin-bottom: 7px; }
-.date-menu-header strong { text-align: center; font-size: 15px; }
-.date-menu-header button { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: #5f697a; }
-.date-menu-header button:hover, .date-menu-header button:focus-visible { outline: 0; color: var(--blue-dark); background: #edf4fd; }
-.date-menu-header button:disabled { color: #c7ccd4; background: transparent; cursor: not-allowed; }
+.date-menu-header { min-height: 38px; display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 4px; margin-bottom: 7px; }
+.date-month-step { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: #5f697a; }
+.date-month-step:hover, .date-month-step:focus-visible { outline: 0; color: var(--blue-dark); background: #edf4fd; }
+.date-month-step:disabled { color: #c7ccd4; background: transparent; cursor: not-allowed; }
+.date-month-selectors { min-width: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 5px; }
+.date-month-selectors .select-trigger { min-height: 34px; height: 34px; padding: 0 7px 0 9px; border: 0; border-radius: 10px; background: #f2f5f9; box-shadow: none; font-size: 12px; font-weight: 750; }
+.date-month-selectors .select-trigger:hover, .date-month-selectors .select-trigger[aria-expanded="true"] { border: 0; background: #eaf3ff; box-shadow: none; }
+.date-month-selectors .select-menu { top: calc(100% + 5px); max-height: 218px; padding: 4px; border-radius: 12px; }
+.date-month-selectors .select-option { min-height: 34px; padding: 0 8px; border-radius: 8px; font-size: 12px; }
+.date-year-select .select-menu { min-width: 112px; }
+.date-month-select .select-menu { min-width: 88px; }
 .date-weekdays, .date-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .date-weekdays { padding: 2px 0 5px; color: #929aa8; font-size: 11px; font-weight: 750; text-align: center; }
 .date-weekdays span { height: 28px; display: grid; place-items: center; }
