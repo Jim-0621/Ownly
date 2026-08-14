@@ -42,6 +42,7 @@ export default function AssetDetail() {
   if (asset === undefined) return <div className="loading-state">正在读取物品…</div>
   if (!asset) return <EmptyState title="物品不存在" description="它可能已被删除。" action={<button className="primary-button" onClick={() => navigate('/')}>返回首页</button>} />
   const status = statusMeta[asset.status]
+  const statusDate = asset.status === 'sold' ? asset.saleDate : asset.status === 'retired' ? asset.retiredDate : undefined
   const expenseBalance = expenseTotal(asset.id, expenses)
 
   async function toggleRetired() {
@@ -109,14 +110,15 @@ export default function AssetDetail() {
           <span className="blue-tag">{category?.name ?? '未分类'}</span>
           <span className="green-tag">{ownedDays(asset)} 天</span>
         </div>
-        <div className="detail-actions">
+        {asset.status !== 'sold' && <div className="detail-actions">
           <button className="soft-button retire" onClick={() => void toggleRetired()}><RotateCcw />{asset.status === 'retired' ? '重新使用' : '退役'}</button>
-        </div>
+        </div>}
       </section>
 
-      <section className="detail-card purchase-card">
+      <section className={statusDate ? 'detail-card purchase-card has-status-date' : 'detail-card purchase-card'}>
         <div><span>购买时间</span><strong>{asset.purchaseDate}</strong></div>
         <div><span>购买价格</span><strong>{money(asset.purchasePrice)}</strong></div>
+        {statusDate && <div><span>{asset.status === 'sold' ? '售出日期' : '退役日期'}</span><strong>{statusDate}</strong></div>}
       </section>
 
       <section className="detail-card expense-card">

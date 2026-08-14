@@ -171,6 +171,8 @@ button { border: 0; background: none; color: inherit; }
 .detail-card, .stats-card, .settings-card { margin-top: 16px; padding: 22px; border-radius: 26px; background: #fff; box-shadow: var(--shadow); }
 .purchase-card { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .purchase-card div:last-child { text-align: right; }
+.purchase-card.has-status-date > div:nth-child(2) { text-align: right; }
+.purchase-card.has-status-date > div:last-child { grid-column: 1 / -1; padding-top: 16px; border-top: 1px solid #edf0f4; text-align: left; }
 .purchase-card span, .notes-card > span { display: block; color: var(--muted); font-size: 14px; font-weight: 700; margin-bottom: 7px; }
 .purchase-card strong { font-size: 20px; }
 .card-title { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }

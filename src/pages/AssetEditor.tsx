@@ -22,6 +22,7 @@ export default function AssetEditor() {
   const [purchaseDate, setPurchaseDate] = useState(today())
   const [purchasePrice, setPurchasePrice] = useState('')
   const [status, setStatus] = useState<AssetStatus>('using')
+  const [statusDate, setStatusDate] = useState(today())
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
 
@@ -33,6 +34,7 @@ export default function AssetEditor() {
     setPurchaseDate(current.purchaseDate)
     setPurchasePrice(String(current.purchasePrice))
     setStatus(current.status)
+    setStatusDate(current.status === 'sold' ? current.saleDate ?? today() : current.status === 'retired' ? current.retiredDate ?? today() : today())
     setNotes(current.notes ?? '')
   }, [current])
 
@@ -42,14 +44,17 @@ export default function AssetEditor() {
     if (!name.trim()) return setError('请输入物品名称')
     if (!purchaseDate) return setError('请选择购买日期')
     if (!Number.isFinite(price) || price < 0) return setError('请输入正确的购买价格')
+    if (status !== 'using' && (!statusDate || statusDate < purchaseDate || statusDate > today())) {
+      return setError(`${status === 'sold' ? '售出' : '退役'}日期应在购买日期和今天之间`)
+    }
 
     const now = new Date().toISOString()
     const assetId = current?.id ?? uid('asset')
     await db.assets.put({
       id: assetId,
       name: name.trim(), categoryId, icon: normalizeAssetIcon(icon, categoryId), purchaseDate, purchasePrice: price, status,
-      retiredDate: status === 'retired' ? current?.retiredDate ?? today() : undefined,
-      saleDate: status === 'sold' ? current?.saleDate ?? today() : undefined,
+      retiredDate: status === 'retired' ? statusDate : undefined,
+      saleDate: status === 'sold' ? statusDate : undefined,
       salePrice: current?.salePrice,
       notes: notes.trim(), createdAt: current?.createdAt ?? now, updatedAt: now,
     })
@@ -70,8 +75,9 @@ export default function AssetEditor() {
         <label className="field"><span>物品名称</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：iPhone 17" maxLength={40} /></label>
         <div className="field-grid">
           <div className="field"><span>分类</span><SelectControl value={categoryId} options={categories.map((item) => ({ value: item.id, label: item.name }))} onChange={(nextCategoryId) => { setCategoryId(nextCategoryId); setIcon(defaultAssetIcon(nextCategoryId)) }} ariaLabel="物品分类" /></div>
-          <div className="field"><span>状态</span><SelectControl value={status} options={[{ value: 'using', label: '使用中' }, { value: 'sold', label: '已售出' }, { value: 'retired', label: '已退役' }]} onChange={(value) => setStatus(value as AssetStatus)} ariaLabel="物品状态" /></div>
+          <div className="field"><span>状态</span><SelectControl value={status} options={[{ value: 'using', label: '使用中' }, { value: 'sold', label: '已售出' }, { value: 'retired', label: '已退役' }]} onChange={(value) => { const nextStatus = value as AssetStatus; if (nextStatus !== status && nextStatus !== 'using') setStatusDate(today()); setStatus(nextStatus) }} ariaLabel="物品状态" /></div>
         </div>
+        {status !== 'using' && <div className="field status-date-field"><span>{status === 'sold' ? '售出日期' : '退役日期'}</span><DatePicker value={statusDate} min={purchaseDate} max={today()} onChange={setStatusDate} ariaLabel={status === 'sold' ? '售出日期' : '退役日期'} /></div>}
         <AssetIconPicker categoryId={categoryId} value={icon} onChange={setIcon} />
         <div className="field-grid">
           <div className="field"><span>购买日期</span><DatePicker value={purchaseDate} max={today()} onChange={setPurchaseDate} ariaLabel="购买日期" /></div>
