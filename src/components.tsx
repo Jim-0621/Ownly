@@ -51,7 +51,10 @@ export function AssetCard({ asset, category, expenses = [] }: { asset: Asset; ca
       </div>
       <div className="asset-main">
         <strong>{asset.name}</strong>
-        <span>{money(asset.purchasePrice)} · {money(dailyCost(asset, expenses))}/天</span>
+        <div className="asset-cost-line">
+          <span className="asset-price">{money(asset.purchasePrice)} ·</span>
+          <span className="asset-daily">{money(dailyCost(asset, expenses))}/天</span>
+        </div>
       </div>
       <div className="asset-days">
         <strong>{ownedDays(asset)}</strong><span>天</span>

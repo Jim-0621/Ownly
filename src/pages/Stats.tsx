@@ -52,10 +52,14 @@ export default function Stats() {
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? EMPTY_EXPENSES
   const categories = useLiveQuery(() => db.categories.toArray(), []) ?? EMPTY_CATEGORIES
   const [range, setRange] = useState<Range>('all')
-  const periodAssets = assets.filter((asset) => asset.purchaseDate >= rangeStart(range))
-  const purchases = periodAssets.reduce((sum, asset) => sum + asset.purchasePrice, 0)
-  const sold = periodAssets.filter((asset) => asset.status === 'sold')
-  const sales = sold.reduce((sum, asset) => sum + (asset.salePrice ?? 0), 0)
+  const startDate = rangeStart(range)
+  const purchasedAssets = assets.filter((asset) => asset.purchaseDate >= startDate)
+  const soldAssets = assets.filter((asset) => asset.saleDate && asset.saleDate >= startDate)
+  const periodExpenses = expenses.filter((expense) => expense.date >= startDate)
+  const purchases = purchasedAssets.reduce((sum, asset) => sum + asset.purchasePrice, 0)
+    + periodExpenses.reduce((sum, expense) => expense.amount > 0 ? sum + expense.amount : sum, 0)
+  const sales = soldAssets.reduce((sum, asset) => sum + (asset.salePrice ?? 0), 0)
+    + periodExpenses.reduce((sum, expense) => expense.amount < 0 ? sum + Math.abs(expense.amount) : sum, 0)
   const totalDaily = assets.reduce((sum, asset) => sum + dailyCost(asset, expenses), 0)
   const trend = useMemo(() => trendData(assets, expenses, range), [assets, expenses, range])
   const categoryData = categories.map((category) => ({
@@ -76,9 +80,10 @@ export default function Stats() {
         <div className="metric-grid">
           <div><span>购入金额</span><strong>{money(purchases)}</strong></div>
           <div><span>卖出金额</span><strong>{money(sales)}</strong></div>
-          <div><span>购入件数</span><strong>{periodAssets.length}</strong></div>
-          <div><span>卖出件数</span><strong>{sold.length}</strong></div>
+          <div><span>购入件数</span><strong>{purchasedAssets.length}</strong></div>
+          <div><span>卖出件数</span><strong>{soldAssets.length}</strong></div>
         </div>
+        <p className="stats-note">正数附加费用计入购入金额，负数附加费用计入卖出金额。</p>
       </section>
 
       <section className="stats-card compact-card">
