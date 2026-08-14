@@ -4,7 +4,7 @@ import { ArrowLeft, Check } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AssetIcon, AssetIconPicker, defaultAssetIcon, normalizeAssetIcon } from '../asset-icons'
 import { DatePicker } from '../DatePicker'
-import { db } from '../db'
+import { db, getCategories } from '../db'
 import { SelectControl } from '../SelectControl'
 import type { AssetStatus, Category } from '../types'
 import { today, uid } from '../utils'
@@ -14,7 +14,7 @@ const EMPTY_CATEGORIES: Category[] = []
 export default function AssetEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const categories = useLiveQuery(() => db.categories.toArray(), []) ?? EMPTY_CATEGORIES
+  const categories = useLiveQuery(() => getCategories(), []) ?? EMPTY_CATEGORIES
   const current = useLiveQuery(() => id ? db.assets.get(id) : undefined, [id])
   const [name, setName] = useState('')
   const [categoryId, setCategoryId] = useState('digital')

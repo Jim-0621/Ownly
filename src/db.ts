@@ -95,6 +95,14 @@ class OwnlyDatabase extends Dexie {
 
 export const db = new OwnlyDatabase()
 
+export async function getCategories() {
+  const categories = await db.categories.toArray()
+  const categoryOrder = new Map(defaultCategories().map((category, index) => [category.id, index]))
+  return categories.sort((first, second) => (
+    (categoryOrder.get(first.id) ?? Number.MAX_SAFE_INTEGER) - (categoryOrder.get(second.id) ?? Number.MAX_SAFE_INTEGER)
+  ))
+}
+
 export async function resetLocalData() {
   await db.transaction('rw', db.categories, db.assets, db.wishes, db.expenses, async () => {
     await Promise.all([db.categories.clear(), db.assets.clear(), db.wishes.clear(), db.expenses.clear()])
@@ -106,7 +114,7 @@ export async function exportData() {
   return {
     version: 2,
     exportedAt: new Date().toISOString(),
-    categories: await db.categories.toArray(),
+    categories: await getCategories(),
     assets: (await db.assets.toArray()).map(sanitizeAsset),
     wishes: await db.wishes.toArray(),
     expenses: await db.expenses.toArray(),

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { db } from '../db'
+import { db, getCategories } from '../db'
 import { dailyCost, daysInclusive, money, today } from '../utils'
 import type { Asset, AssetExpense, Category } from '../types'
 
@@ -50,7 +50,7 @@ function trendData(assets: Asset[], expenses: AssetExpense[], range: Range) {
 export default function Stats() {
   const assets = useLiveQuery(() => db.assets.toArray(), []) ?? EMPTY_ASSETS
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? EMPTY_EXPENSES
-  const categories = useLiveQuery(() => db.categories.toArray(), []) ?? EMPTY_CATEGORIES
+  const categories = useLiveQuery(() => getCategories(), []) ?? EMPTY_CATEGORIES
   const [range, setRange] = useState<Range>('all')
   const startDate = rangeStart(range)
   const purchasedAssets = assets.filter((asset) => asset.purchaseDate >= startDate)

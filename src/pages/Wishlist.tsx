@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Check, Plus, Trash2, X } from 'lucide-react'
 import { defaultAssetIcon } from '../asset-icons'
-import { db } from '../db'
+import { db, getCategories } from '../db'
 import { SelectControl } from '../SelectControl'
 import { money, today, uid } from '../utils'
 
@@ -14,7 +14,7 @@ const priorityMeta = {
 
 export default function Wishlist() {
   const wishes = useLiveQuery(() => db.wishes.orderBy('createdAt').reverse().toArray(), []) ?? []
-  const categories = useLiveQuery(() => db.categories.toArray(), []) ?? []
+  const categories = useLiveQuery(() => getCategories(), []) ?? []
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')

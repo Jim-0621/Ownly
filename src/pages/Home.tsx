@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowDownUp, Plus, Search, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { AssetCard, EmptyState } from '../components'
-import { db } from '../db'
+import { db, getCategories } from '../db'
 import { SelectControl } from '../SelectControl'
 import type { Asset, AssetExpense, Category } from '../types'
 import { dailyCost, money, netCost, ownedDays } from '../utils'
@@ -31,7 +31,7 @@ export default function Home() {
   const navigate = useNavigate()
   const assets = useLiveQuery(() => db.assets.toArray(), []) ?? EMPTY_ASSETS
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? EMPTY_EXPENSES
-  const categories = useLiveQuery(() => db.categories.toArray(), []) ?? EMPTY_CATEGORIES
+  const categories = useLiveQuery(() => getCategories(), []) ?? EMPTY_CATEGORIES
   const [viewMode, setViewMode] = useState<ViewMode>('status')
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState<Sort>('value')
