@@ -95,7 +95,7 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
-    categoryId: 'other',
+    categoryId: 'travel',
     name: '出行',
     icons: [
       { key: 'car', label: '汽车', icon: Car },
@@ -109,7 +109,7 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
-    categoryId: 'other',
+    categoryId: 'office',
     name: '办公与兴趣',
     icons: [
       { key: 'book', label: '书籍', icon: BookOpen },
@@ -151,6 +151,8 @@ const categoryDefaults: Record<string, string> = {
   home: 'sofa',
   appliance: 'washer',
   clothing: 'shirt',
+  travel: 'car',
+  office: 'book',
   other: 'box',
 }
 

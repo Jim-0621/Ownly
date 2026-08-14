@@ -34,8 +34,20 @@ function defaultCategories(createdAt = new Date().toISOString()): Category[] {
     { id: 'digital', name: '数码', icon: '📱', color: '#1d82ff', createdAt },
     { id: 'home', name: '家居', icon: '🏠', color: '#7c5cff', createdAt },
     { id: 'appliance', name: '家电', icon: '🧺', color: '#00a77b', createdAt },
-    { id: 'clothing', name: '服饰', icon: '👕', color: '#ff7a59', createdAt },
+    { id: 'clothing', name: '服饰穿戴', icon: '👕', color: '#ff7a59', createdAt },
+    { id: 'travel', name: '出行', icon: '🚗', color: '#00a6c8', createdAt },
+    { id: 'office', name: '办公与兴趣', icon: '📚', color: '#c17a18', createdAt },
     { id: 'other', name: '其他', icon: '📦', color: '#7b8496', createdAt },
+  ]
+}
+
+function withDefaultCategories(categories: Category[]) {
+  const categoryMap = new Map(categories.map((category) => [category.id, category]))
+  const defaults = defaultCategories()
+  const defaultIds = new Set(defaults.map((category) => category.id))
+  return [
+    ...defaults.map((category) => ({ ...category, ...categoryMap.get(category.id), name: category.name })),
+    ...categories.filter((category) => !defaultIds.has(category.id)),
   ]
 }
 
@@ -62,6 +74,12 @@ class OwnlyDatabase extends Dexie {
       })
     ))
     this.version(4).stores(databaseStoresWithExpenses)
+    this.version(5).stores(databaseStoresWithExpenses).upgrade(async (transaction) => {
+      const categories = transaction.table('categories')
+      const currentCategories = await categories.toArray() as Category[]
+      await categories.clear()
+      await categories.bulkAdd(withDefaultCategories(currentCategories))
+    })
 
     this.on('populate', () => {
       void this.categories.bulkAdd(defaultCategories())
@@ -99,7 +117,7 @@ export async function importData(value: unknown) {
   if (!Array.isArray(data.categories) || !Array.isArray(data.assets) || !Array.isArray(data.wishes) || (data.expenses !== undefined && !Array.isArray(data.expenses))) {
     throw new Error('备份文件格式不正确')
   }
-  const categories = data.categories
+  const categories = withDefaultCategories(data.categories)
   const assets = data.assets.map(sanitizeAsset)
   const wishes = data.wishes
   const expenses = data.expenses ?? []
