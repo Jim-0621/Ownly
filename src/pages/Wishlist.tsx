@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Check, Plus, Trash2, X } from 'lucide-react'
+import { defaultAssetIcon } from '../asset-icons'
 import { db } from '../db'
 import { money, today, uid } from '../utils'
 
@@ -38,7 +39,7 @@ export default function Wishlist() {
     const now = new Date().toISOString()
     await db.transaction('rw', db.wishes, db.assets, async () => {
       await db.assets.add({
-        id: uid('asset'), name: wish.name, categoryId: wish.categoryId, icon: wish.icon,
+        id: uid('asset'), name: wish.name, categoryId: wish.categoryId, icon: defaultAssetIcon(wish.categoryId),
         purchaseDate: today(), purchasePrice: wish.expectedPrice, status: 'using', favorite: false,
         notes: wish.notes, createdAt: now, updatedAt: now,
       })

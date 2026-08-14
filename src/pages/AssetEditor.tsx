@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, Camera, Check, X } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { AssetIcon, AssetIconPicker, defaultAssetIcon, normalizeAssetIcon } from '../asset-icons'
 import { db } from '../db'
 import type { AssetStatus, Category } from '../types'
 import { today, uid } from '../utils'
@@ -15,8 +16,7 @@ export default function AssetEditor() {
   const current = useLiveQuery(() => id ? db.assets.get(id) : undefined, [id])
   const [name, setName] = useState('')
   const [categoryId, setCategoryId] = useState('digital')
-  const [icon, setIcon] = useState('📦')
-  const [image, setImage] = useState<string>()
+  const [icon, setIcon] = useState(defaultAssetIcon('digital'))
   const [purchaseDate, setPurchaseDate] = useState(today())
   const [purchasePrice, setPurchasePrice] = useState('')
   const [status, setStatus] = useState<AssetStatus>('using')
@@ -27,8 +27,7 @@ export default function AssetEditor() {
     if (!current) return
     setName(current.name)
     setCategoryId(current.categoryId)
-    setIcon(current.icon)
-    setImage(current.image)
+    setIcon(normalizeAssetIcon(current.icon, current.categoryId))
     setPurchaseDate(current.purchaseDate)
     setPurchasePrice(String(current.purchasePrice))
     setStatus(current.status)
@@ -36,20 +35,8 @@ export default function AssetEditor() {
   }, [current])
 
   useEffect(() => {
-    const category = categories.find((item) => item.id === categoryId)
-    if (!id && category) setIcon(category.icon)
-  }, [categories, categoryId, id])
-
-  async function chooseImage(file?: File) {
-    if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      setError('图片不能超过 5MB')
-      return
-    }
-    const reader = new FileReader()
-    reader.onload = () => setImage(String(reader.result))
-    reader.readAsDataURL(file)
-  }
+    if (!id) setIcon(defaultAssetIcon(categoryId))
+  }, [categoryId, id])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -62,7 +49,7 @@ export default function AssetEditor() {
     const assetId = current?.id ?? uid('asset')
     await db.assets.put({
       id: assetId,
-      name: name.trim(), categoryId, icon, image, purchaseDate, purchasePrice: price, status,
+      name: name.trim(), categoryId, icon: normalizeAssetIcon(icon, categoryId), purchaseDate, purchasePrice: price, status,
       favorite: current?.favorite ?? false,
       retiredDate: status === 'retired' ? current?.retiredDate ?? today() : undefined,
       saleDate: status === 'sold' ? current?.saleDate ?? today() : undefined,
@@ -81,20 +68,14 @@ export default function AssetEditor() {
       </header>
 
       <form id="asset-form" onSubmit={submit} className="form-card">
-        <div className="photo-field">
-          <label className={image ? 'photo-preview has-image' : 'photo-preview'}>
-            {image ? <img src={image} alt="物品预览" /> : <><span>{icon}</span><small><Camera size={17} />添加照片</small></>}
-            <input type="file" accept="image/*" capture="environment" onChange={(event) => void chooseImage(event.target.files?.[0])} />
-          </label>
-          {image && <button type="button" className="remove-photo" onClick={() => setImage(undefined)}><X size={16} />移除照片</button>}
-        </div>
-
         {error && <div className="error-banner">{error}</div>}
+        <div className="asset-icon-preview"><AssetIcon name={icon} size={58} /><span>当前物品图标</span></div>
         <label className="field"><span>物品名称</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：iPhone 17" maxLength={40} /></label>
         <div className="field-grid">
           <label className="field"><span>分类</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>{categories.map((item) => <option key={item.id} value={item.id}>{item.icon} {item.name}</option>)}</select></label>
           <label className="field"><span>状态</span><select value={status} onChange={(event) => setStatus(event.target.value as AssetStatus)}><option value="using">使用中</option><option value="stored">收藏中</option><option value="retired">已退役</option><option value="sold">已售出</option></select></label>
         </div>
+        <AssetIconPicker value={icon} onChange={setIcon} />
         <div className="field-grid">
           <label className="field"><span>购买日期</span><input type="date" value={purchaseDate} max={today()} onChange={(event) => setPurchaseDate(event.target.value)} /></label>
           <label className="field"><span>购买价格</span><div className="money-input"><b>¥</b><input inputMode="decimal" value={purchasePrice} onChange={(event) => setPurchasePrice(event.target.value)} placeholder="0.00" /></div></label>

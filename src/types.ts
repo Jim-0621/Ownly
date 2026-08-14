@@ -13,7 +13,6 @@ export interface Asset {
   name: string
   categoryId: string
   icon: string
-  image?: string
   purchaseDate: string
   purchasePrice: number
   status: AssetStatus

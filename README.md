@@ -1,28 +1,93 @@
 # Ownly
 
-Ownly 是一个本地优先的个人资产管理 PWA，用来记录物品、购买成本、使用天数、日均成本和心愿单。
+Ownly 是一个个人资产管理网页应用，用来记录物品、购买成本、使用天数、日均成本和心愿单。
 
-## 本地运行
+当前版本采用“本地缓存 + Cloudflare D1 云同步”方案：
 
-```bash
+- 每个用户通过用户名和密码登录，账号数据彼此隔离。
+- 数据先保存在当前浏览器的 IndexedDB，修改后自动同步到 D1。
+- 更换设备后登录同一账号，会自动从 D1 恢复数据。
+- 密码使用 PBKDF2-SHA256 哈希保存，登录状态使用 HttpOnly Cookie。
+- 注册必须提供管理员设置的注册码，适合 2～3 人的小范围自用。
+- 物品图片改为内置轻量图标，不上传照片；服务端仍会拒绝超过 10KB 的兼容图片字段。
+
+## 安装与普通前端开发
+
+```powershell
 npm install
 npm run dev
 ```
 
-开发服务器启动后，可在同一局域网内使用手机访问终端显示的 Network 地址。
+普通 Vite 开发服务器没有 Cloudflare Functions 和 D1，只适合调整页面样式。涉及注册、登录或同步时，请使用下方的云端联调方式。
 
-## 构建
+## Cloudflare 初始化
 
-```bash
-npm run build
-npm run preview
+项目当前已绑定 `ownly-db`。如果是在一个全新的 Cloudflare 账号中重新初始化，执行：
+
+```powershell
+npx wrangler login
+npx wrangler d1 create ownly-db
 ```
 
-`dist` 目录可部署到任意支持 HTTPS 和单页应用回退的静态网站服务。
+然后把命令返回的 `database_id` 更新到 `wrangler.toml`，再初始化数据库表：
 
-## 数据说明
+```powershell
+npm run db:migrate:local
+npm run db:migrate:remote
+```
 
-- 资产、分类、心愿单和图片保存在当前浏览器的 IndexedDB 中。
-- 首次打开会生成少量演示数据，可直接编辑或删除。
-- “我的 → 数据与备份”可以导出或恢复 JSON 备份。
-- 在接入云同步之前，清理浏览器网站数据会导致本地数据丢失，请定期导出备份。
+## 本地联调登录和同步
+
+在项目根目录创建不会提交到 Git 的 `.dev.vars`：
+
+```text
+REGISTRATION_CODE=你自己设置的本地测试注册码
+```
+
+然后运行：
+
+```powershell
+npm run dev:cloud
+```
+
+访问 Wrangler 输出的本地地址。测试数据保存在 `.wrangler` 的本地 D1 中，不会写入线上数据库。
+
+## 设置线上注册码
+
+注册码不要写进源码或提交到 Git。首次部署前，在终端交互输入：
+
+```powershell
+npx wrangler pages secret put REGISTRATION_CODE --project-name ownly
+```
+
+只有持有该注册码的人可以创建账号；已注册用户以后只需要用户名和密码。
+
+## 构建与部署
+
+```powershell
+npm run build
+npm run deploy
+```
+
+`npm run deploy` 会构建网页和 Pages Function，并部署到 `ownly` 项目的 `production` 分支。部署完成后访问：
+
+```text
+https://ownly.pages.dev
+```
+
+## 数据同步规则
+
+- 登录时优先读取该账号的 D1 数据；云端还没有数据时，上传当前本地数据作为初始快照。
+- 本地修改后约 700ms 自动上传，也可以在“我的”页面点击“立即同步”。
+- 当前采用完整快照和最后保存覆盖，避免为少量用户引入复杂的冲突合并逻辑。
+- 不建议在两个设备上同时离线修改；后同步的设备会覆盖先前的完整快照。
+- “我的 → 数据与备份”仍可导出和恢复 JSON，建议偶尔保留一份离线备份。
+- 浏览器缓存只用于离线和加速；换设备后只要登录同一账号即可恢复云端数据。
+
+## 常用检查
+
+```powershell
+npm run lint
+npm run typecheck:functions
+npm run build
+```

@@ -1,12 +1,16 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { DatabaseBackup, Download, Plus, ShieldCheck, Trash2, Upload } from 'lucide-react'
+import { DatabaseBackup, Download, LogOut, Plus, ShieldCheck, Trash2, Upload } from 'lucide-react'
 import { db, exportData, importData } from '../db'
+import { useAuth } from '../auth-context'
+import { useCloudSync } from '../sync-context'
 import { uid } from '../utils'
 
 const categoryColors = ['#1d82ff', '#7c5cff', '#00a77b', '#ff7a59', '#ffb020', '#7b8496']
 
 export default function Settings() {
+  const { user, logout } = useAuth()
+  const { status, lastSyncedAt, message: syncMessage, syncNow } = useCloudSync()
   const categories = useLiveQuery(() => db.categories.orderBy('createdAt').toArray(), []) ?? []
   const assets = useLiveQuery(() => db.assets.toArray(), []) ?? []
   const fileRef = useRef<HTMLInputElement>(null)
@@ -56,7 +60,9 @@ export default function Settings() {
   return (
     <div className="standard-page settings-page">
       <header className="standard-header"><div><span className="eyebrow dark">MY OWNLY</span><h1>我的</h1></div></header>
-      <section className="profile-card"><div className="profile-mark">O</div><div><strong>Ownly 本地空间</strong><span><ShieldCheck size={15} />数据仅保存在当前浏览器</span></div><b>{assets.length} 件物品</b></section>
+      <section className="profile-card"><div className="profile-mark">{user?.username.slice(0, 1).toUpperCase()}</div><div><strong>{user?.username} 的云空间</strong><span><ShieldCheck size={15} />{status === 'synced' ? '数据已安全同步到 Cloudflare D1' : status === 'syncing' ? '正在同步到云端' : '本地缓存可继续使用'}</span></div><div className="profile-meta"><b>{assets.length} 件物品</b><button onClick={() => void syncNow()}>立即同步</button></div></section>
+      {syncMessage && <div className="sync-warning">{syncMessage}</div>}
+      {lastSyncedAt && <p className="last-sync-time">上次同步：{new Date(lastSyncedAt).toLocaleString('zh-CN')}</p>}
       {message && <button className="message-banner" onClick={() => setMessage('')}>{message}</button>}
 
       <section className="settings-card">
@@ -66,13 +72,14 @@ export default function Settings() {
       </section>
 
       <section className="settings-card data-card">
-        <div className="settings-title"><div><h2>数据与备份</h2><p>首版使用本地存储，请定期备份</p></div><DatabaseBackup /></div>
+        <div className="settings-title"><div><h2>数据与备份</h2><p>自动同步到云端，同时保留本地缓存</p></div><DatabaseBackup /></div>
         <button className="settings-action" onClick={() => void downloadBackup()}><span><Download />导出 JSON 备份</span><small>推荐</small></button>
         <button className="settings-action" onClick={() => fileRef.current?.click()}><span><Upload />从备份恢复</span></button>
         <input ref={fileRef} hidden type="file" accept="application/json,.json" onChange={(event) => void uploadBackup(event.target.files?.[0])} />
         <button className="settings-action danger-action" onClick={() => void clearAll()}><span><Trash2 />清空全部数据</span></button>
+        <button className="settings-action" onClick={() => void logout()}><span><LogOut />退出当前账号</span></button>
       </section>
-      <p className="version-label">Ownly 0.1.0 · 本地优先版</p>
+      <p className="version-label">Ownly 0.1.0 · 云同步版</p>
     </div>
   )
 }

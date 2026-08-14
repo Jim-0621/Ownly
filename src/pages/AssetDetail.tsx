@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { ArrowLeft, Heart, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { AssetIcon, normalizeAssetIcon } from '../asset-icons'
 import { db } from '../db'
 import { dailyCost, money, netCost, ownedDays, statusMeta, today } from '../utils'
 import { EmptyState } from '../components'
@@ -60,7 +61,7 @@ export default function AssetDetail() {
       </header>
 
       <section className="detail-intro">
-        <div className="detail-visual">{asset.image ? <img src={asset.image} alt={asset.name} /> : <span>{asset.icon || category?.icon || '📦'}</span>}</div>
+        <div className="detail-visual" style={{ color: category?.color, background: category ? `${category.color}12` : undefined }}><AssetIcon name={normalizeAssetIcon(asset.icon, asset.categoryId)} size={72} /></div>
         <h1>{asset.name}</h1>
         <div className="detail-tags">
           <span><i style={{ background: status.color }} />{status.label}</span>

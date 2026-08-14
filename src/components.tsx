@@ -1,5 +1,8 @@
-import { BarChart3, Box, Heart, Settings2 } from 'lucide-react'
+import { BarChart3, Box, Cloud, CloudOff, Heart, LoaderCircle, LogOut, Settings2 } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { AssetIcon, normalizeAssetIcon } from './asset-icons'
+import { useAuth } from './auth-context'
+import { useCloudSync } from './sync-context'
 import type { Asset, Category } from './types'
 import { dailyCost, money, ownedDays, statusMeta } from './utils'
 
@@ -12,6 +15,10 @@ const navItems = [
 
 export function AppLayout() {
   const isAssetRoute = useLocation().pathname.startsWith('/assets/')
+  const { user, logout } = useAuth()
+  const { status } = useCloudSync()
+  const SyncIcon = status === 'offline' || status === 'error' ? CloudOff : status === 'syncing' || status === 'loading' ? LoaderCircle : Cloud
+  const statusText = status === 'synced' ? '云端已同步' : status === 'syncing' ? '正在同步' : status === 'offline' ? '离线使用中' : status === 'error' ? '同步失败' : '正在连接'
   return (
     <div className={isAssetRoute ? 'app-shell asset-route-shell' : 'app-shell'}>
       <main className="page-container"><Outlet /></main>
@@ -26,7 +33,10 @@ export function AppLayout() {
             <span>{label}</span>
           </NavLink>
         ))}
-        <div className="nav-footer"><i />本地数据已启用</div>
+        <div className={`nav-footer sync-${status}`}>
+          <div className="nav-user"><span>{user?.username.slice(0, 1).toUpperCase()}</span><div><strong>{user?.username}</strong><small><SyncIcon />{statusText}</small></div></div>
+          <button onClick={() => void logout()} title="退出登录"><LogOut /></button>
+        </div>
       </nav>
     </div>
   )
@@ -36,8 +46,8 @@ export function AssetCard({ asset, category }: { asset: Asset; category?: Catego
   const status = statusMeta[asset.status]
   return (
     <Link to={`/assets/${asset.id}`} className="asset-card">
-      <div className="asset-visual">
-        {asset.image ? <img src={asset.image} alt="" /> : <span>{asset.icon || category?.icon || '📦'}</span>}
+      <div className="asset-visual" style={{ color: category?.color, background: category ? `${category.color}12` : undefined }}>
+        <AssetIcon name={normalizeAssetIcon(asset.icon, asset.categoryId)} size={35} />
       </div>
       <div className="asset-main">
         <strong>{asset.name}</strong>
