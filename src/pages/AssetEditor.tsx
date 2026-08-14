@@ -34,10 +34,6 @@ export default function AssetEditor() {
     setNotes(current.notes ?? '')
   }, [current])
 
-  useEffect(() => {
-    if (!id) setIcon(defaultAssetIcon(categoryId))
-  }, [categoryId, id])
-
   async function submit(event: FormEvent) {
     event.preventDefault()
     const price = Number(purchasePrice)
@@ -50,7 +46,6 @@ export default function AssetEditor() {
     await db.assets.put({
       id: assetId,
       name: name.trim(), categoryId, icon: normalizeAssetIcon(icon, categoryId), purchaseDate, purchasePrice: price, status,
-      favorite: current?.favorite ?? false,
       retiredDate: status === 'retired' ? current?.retiredDate ?? today() : undefined,
       saleDate: status === 'sold' ? current?.saleDate ?? today() : undefined,
       salePrice: current?.salePrice,
@@ -72,10 +67,10 @@ export default function AssetEditor() {
         <div className="asset-icon-preview"><AssetIcon name={icon} size={58} /><span>当前物品图标</span></div>
         <label className="field"><span>物品名称</span><input value={name} onChange={(event) => setName(event.target.value)} placeholder="例如：iPhone 17" maxLength={40} /></label>
         <div className="field-grid">
-          <label className="field"><span>分类</span><select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>{categories.map((item) => <option key={item.id} value={item.id}>{item.icon} {item.name}</option>)}</select></label>
-          <label className="field"><span>状态</span><select value={status} onChange={(event) => setStatus(event.target.value as AssetStatus)}><option value="using">使用中</option><option value="stored">收藏中</option><option value="retired">已退役</option><option value="sold">已售出</option></select></label>
+          <label className="field"><span>分类</span><select value={categoryId} onChange={(event) => { const nextCategoryId = event.target.value; setCategoryId(nextCategoryId); setIcon(defaultAssetIcon(nextCategoryId)) }}>{categories.map((item) => <option key={item.id} value={item.id}>{item.icon} {item.name}</option>)}</select></label>
+          <label className="field"><span>状态</span><select value={status} onChange={(event) => setStatus(event.target.value as AssetStatus)}><option value="using">使用中</option><option value="sold">已售出</option><option value="retired">已退役</option></select></label>
         </div>
-        <AssetIconPicker value={icon} onChange={setIcon} />
+        <AssetIconPicker categoryId={categoryId} value={icon} onChange={setIcon} />
         <div className="field-grid">
           <label className="field"><span>购买日期</span><input type="date" value={purchaseDate} max={today()} onChange={(event) => setPurchaseDate(event.target.value)} /></label>
           <label className="field"><span>购买价格</span><div className="money-input"><b>¥</b><input inputMode="decimal" value={purchasePrice} onChange={(event) => setPurchasePrice(event.target.value)} placeholder="0.00" /></div></label>

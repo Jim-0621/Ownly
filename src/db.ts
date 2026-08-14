@@ -2,17 +2,26 @@ import Dexie, { type EntityTable } from 'dexie'
 import { normalizeAssetIcon } from './asset-icons'
 import type { Asset, Category, WishItem } from './types'
 
-const databaseStores = {
+const legacyDatabaseStores = {
   assets: 'id, name, categoryId, status, favorite, purchaseDate, createdAt',
   categories: 'id, name, createdAt',
   wishes: 'id, name, categoryId, priority, createdAt',
 }
 
-function sanitizeAsset(asset: Asset) {
-  const sanitized = { ...asset } as Asset & { image?: unknown }
+const databaseStores = {
+  ...legacyDatabaseStores,
+  assets: 'id, name, categoryId, status, purchaseDate, createdAt',
+}
+
+type LegacyAsset = Omit<Asset, 'status'> & { image?: unknown; favorite?: unknown; status: Asset['status'] | 'stored' }
+
+function sanitizeAsset(asset: Asset | LegacyAsset) {
+  const sanitized = { ...asset } as LegacyAsset
   delete sanitized.image
+  delete sanitized.favorite
+  if (sanitized.status === 'stored') sanitized.status = 'using'
   sanitized.icon = normalizeAssetIcon(sanitized.icon, sanitized.categoryId)
-  return sanitized
+  return sanitized as Asset
 }
 
 function defaultCategories(createdAt = new Date().toISOString()): Category[] {
@@ -32,10 +41,17 @@ class OwnlyDatabase extends Dexie {
 
   constructor() {
     super('ownly-database')
-    this.version(1).stores(databaseStores)
-    this.version(2).stores(databaseStores).upgrade((transaction) => (
+    this.version(1).stores(legacyDatabaseStores)
+    this.version(2).stores(legacyDatabaseStores).upgrade((transaction) => (
       transaction.table('assets').toCollection().modify((asset: Asset & { image?: unknown }) => {
         delete asset.image
+        asset.icon = normalizeAssetIcon(asset.icon, asset.categoryId)
+      })
+    ))
+    this.version(3).stores(databaseStores).upgrade((transaction) => (
+      transaction.table('assets').toCollection().modify((asset: LegacyAsset) => {
+        delete asset.favorite
+        if (asset.status === 'stored') asset.status = 'using'
         asset.icon = normalizeAssetIcon(asset.icon, asset.categoryId)
       })
     ))

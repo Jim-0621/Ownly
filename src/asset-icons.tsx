@@ -19,12 +19,14 @@ interface AssetIconDefinition {
 }
 
 interface AssetIconGroup {
+  categoryId: string
   name: string
   icons: AssetIconDefinition[]
 }
 
 export const assetIconGroups: AssetIconGroup[] = [
   {
+    categoryId: 'digital',
     name: '数码',
     icons: [
       { key: 'smartphone', label: '手机', icon: Smartphone },
@@ -43,6 +45,7 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
+    categoryId: 'home',
     name: '家居',
     icons: [
       { key: 'sofa', label: '沙发', icon: Sofa },
@@ -61,6 +64,7 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
+    categoryId: 'appliance',
     name: '家电',
     icons: [
       { key: 'tv', label: '电视', icon: Tv },
@@ -76,6 +80,7 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
+    categoryId: 'clothing',
     name: '服饰穿戴',
     icons: [
       { key: 'shirt', label: '衣服', icon: Shirt },
@@ -90,6 +95,7 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
+    categoryId: 'other',
     name: '出行',
     icons: [
       { key: 'car', label: '汽车', icon: Car },
@@ -103,6 +109,7 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
+    categoryId: 'other',
     name: '办公与兴趣',
     icons: [
       { key: 'book', label: '书籍', icon: BookOpen },
@@ -120,6 +127,7 @@ export const assetIconGroups: AssetIconGroup[] = [
     ],
   },
   {
+    categoryId: 'other',
     name: '其他',
     icons: [
       { key: 'box', label: '普通物品', icon: Box },
@@ -137,6 +145,7 @@ export const assetIconGroups: AssetIconGroup[] = [
 ]
 
 const iconMap = new Map(assetIconGroups.flatMap((group) => group.icons).map((item) => [item.key, item.icon]))
+const iconCategoryMap = new Map(assetIconGroups.flatMap((group) => group.icons.map((item) => [item.key, group.categoryId])))
 const categoryDefaults: Record<string, string> = {
   digital: 'smartphone',
   home: 'sofa',
@@ -150,7 +159,8 @@ export function defaultAssetIcon(categoryId: string) {
 }
 
 export function normalizeAssetIcon(icon: string | undefined, categoryId: string) {
-  return icon && iconMap.has(icon) ? icon : defaultAssetIcon(categoryId)
+  const normalizedCategoryId = categoryDefaults[categoryId] ? categoryId : 'other'
+  return icon && iconCategoryMap.get(icon) === normalizedCategoryId ? icon : defaultAssetIcon(categoryId)
 }
 
 export function AssetIcon({ name, size = 32 }: { name: string; size?: number }) {
@@ -158,11 +168,13 @@ export function AssetIcon({ name, size = 32 }: { name: string; size?: number }) 
   return <Icon size={size} strokeWidth={1.9} aria-hidden="true" />
 }
 
-export function AssetIconPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export function AssetIconPicker({ categoryId, value, onChange }: { categoryId: string; value: string; onChange: (value: string) => void }) {
+  const normalizedCategoryId = categoryDefaults[categoryId] ? categoryId : 'other'
+  const groups = assetIconGroups.filter((group) => group.categoryId === normalizedCategoryId)
   return (
     <fieldset className="asset-icon-picker">
       <legend>选择图标</legend>
-      {assetIconGroups.map((group) => (
+      {groups.map((group) => (
         <section key={group.name}>
           <h3>{group.name}</h3>
           <div className="asset-icon-grid">

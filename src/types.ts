@@ -1,4 +1,4 @@
-export type AssetStatus = 'using' | 'stored' | 'retired' | 'sold'
+export type AssetStatus = 'using' | 'retired' | 'sold'
 
 export interface Category {
   id: string
@@ -16,7 +16,6 @@ export interface Asset {
   purchaseDate: string
   purchasePrice: number
   status: AssetStatus
-  favorite: boolean
   retiredDate?: string
   saleDate?: string
   salePrice?: number

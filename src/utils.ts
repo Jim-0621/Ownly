@@ -2,7 +2,6 @@ import type { Asset, AssetStatus } from './types'
 
 export const statusMeta: Record<AssetStatus, { label: string; color: string }> = {
   using: { label: '使用中', color: '#20c997' },
-  stored: { label: '收藏中', color: '#ffb020' },
   retired: { label: '已退役', color: '#9098a8' },
   sold: { label: '已售出', color: '#ff5d67' },
 }

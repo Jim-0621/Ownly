@@ -40,7 +40,7 @@ export default function Wishlist() {
     await db.transaction('rw', db.wishes, db.assets, async () => {
       await db.assets.add({
         id: uid('asset'), name: wish.name, categoryId: wish.categoryId, icon: defaultAssetIcon(wish.categoryId),
-        purchaseDate: today(), purchasePrice: wish.expectedPrice, status: 'using', favorite: false,
+        purchaseDate: today(), purchasePrice: wish.expectedPrice, status: 'using',
         notes: wish.notes, createdAt: now, updatedAt: now,
       })
       await db.wishes.delete(wish.id)

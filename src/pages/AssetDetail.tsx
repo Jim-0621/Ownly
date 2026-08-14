@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { ArrowLeft, Heart, Pencil, RotateCcw, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AssetIcon, normalizeAssetIcon } from '../asset-icons'
 import { db } from '../db'
@@ -27,11 +27,6 @@ export default function AssetDetail() {
   if (asset === undefined) return <div className="loading-state">正在读取物品…</div>
   if (!asset) return <EmptyState title="物品不存在" description="它可能已被删除。" action={<button className="primary-button" onClick={() => navigate('/')}>返回首页</button>} />
   const status = statusMeta[asset.status]
-
-  async function toggleFavorite() {
-    if (!asset) return
-    await db.assets.update(asset.id, { favorite: !asset.favorite, updatedAt: new Date().toISOString() })
-  }
 
   async function toggleRetired() {
     if (!asset) return
@@ -69,7 +64,6 @@ export default function AssetDetail() {
           <span className="green-tag">{ownedDays(asset)} 天</span>
         </div>
         <div className="detail-actions">
-          <button className={asset.favorite ? 'soft-button favorite' : 'soft-button'} onClick={() => void toggleFavorite()}><Heart fill={asset.favorite ? 'currentColor' : 'none'} />{asset.favorite ? '已收藏' : '收藏'}</button>
           <button className="soft-button retire" onClick={() => void toggleRetired()}><RotateCcw />{asset.status === 'retired' ? '重新使用' : '退役'}</button>
         </div>
       </section>

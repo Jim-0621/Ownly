@@ -5,46 +5,68 @@ import { useNavigate } from 'react-router-dom'
 import { AssetCard, EmptyState } from '../components'
 import { db } from '../db'
 import type { Asset, Category } from '../types'
-import { dailyCost, money } from '../utils'
+import { dailyCost, money, ownedDays } from '../utils'
 
-type Filter = 'all' | 'using' | 'stored' | 'favorite'
-type Sort = 'recent' | 'value' | 'daily'
+type ViewMode = 'status' | 'category'
+type Sort = 'value' | 'days' | 'purchaseDate' | 'daily'
+
 const EMPTY_ASSETS: Asset[] = []
 const EMPTY_CATEGORIES: Category[] = []
+const statusFilters = [
+  { value: 'all', label: '全部' },
+  { value: 'using', label: '使用中' },
+  { value: 'sold', label: '已售出' },
+  { value: 'retired', label: '已退役' },
+]
+const sortOptions: Array<{ value: Sort; label: string }> = [
+  { value: 'value', label: '金额从高到低' },
+  { value: 'days', label: '使用天数从长到短' },
+  { value: 'purchaseDate', label: '购入时间从近到远' },
+  { value: 'daily', label: '日均从高到低' },
+]
 
 export default function Home() {
   const navigate = useNavigate()
   const assets = useLiveQuery(() => db.assets.toArray(), []) ?? EMPTY_ASSETS
   const categories = useLiveQuery(() => db.categories.toArray(), []) ?? EMPTY_CATEGORIES
-  const [filter, setFilter] = useState<Filter>('all')
-  const [sort, setSort] = useState<Sort>('recent')
+  const [viewMode, setViewMode] = useState<ViewMode>('status')
+  const [filter, setFilter] = useState('all')
+  const [sort, setSort] = useState<Sort>('purchaseDate')
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
 
   const visibleAssets = useMemo(() => {
+    const keyword = query.trim().toLowerCase()
     const filtered = assets.filter((asset) => {
-      if (filter === 'favorite') return asset.favorite
-      if (filter !== 'all' && asset.status !== filter) return false
-      return asset.name.toLowerCase().includes(query.trim().toLowerCase())
+      if (filter !== 'all') {
+        if (viewMode === 'status' && asset.status !== filter) return false
+        if (viewMode === 'category' && asset.categoryId !== filter) return false
+      }
+      return asset.name.toLowerCase().includes(keyword)
     })
     return filtered.sort((a, b) => {
       if (sort === 'value') return b.purchasePrice - a.purchasePrice
+      if (sort === 'days') return ownedDays(b) - ownedDays(a)
       if (sort === 'daily') return dailyCost(b) - dailyCost(a)
-      return b.createdAt.localeCompare(a.createdAt)
+      return b.purchaseDate.localeCompare(a.purchaseDate)
     })
-  }, [assets, filter, query, sort])
+  }, [assets, filter, query, sort, viewMode])
 
   const totalAsset = assets.filter((item) => item.status !== 'sold').reduce((sum, item) => sum + item.purchasePrice, 0)
   const totalDaily = assets.filter((item) => item.status !== 'sold').reduce((sum, item) => sum + dailyCost(item), 0)
   const categoryMap = new Map(categories.map((category) => [category.id, category]))
+  const filterOptions = viewMode === 'status'
+    ? statusFilters
+    : [{ value: 'all', label: '全部' }, ...categories.map((category) => ({ value: category.id, label: `${category.icon} ${category.name}` }))]
 
-  function cycleSort() {
-    setSort((current) => current === 'recent' ? 'value' : current === 'value' ? 'daily' : 'recent')
+  function changeViewMode(nextMode: ViewMode) {
+    setViewMode(nextMode)
+    setFilter('all')
   }
 
   return (
     <div className="home-page">
-      <section className="hero-card">
+      <section className={searchOpen ? 'hero-card search-open' : 'hero-card'}>
         <div className="hero-topline">
           <div><span className="eyebrow">OWNLY</span><h1>我的好物</h1></div>
           <div className="hero-actions">
@@ -63,11 +85,23 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="filter-row" aria-label="资产筛选">
-        {([['all', '全部'], ['using', '使用中'], ['stored', '收藏中'], ['favorite', '已收藏']] as const).map(([value, label]) => (
-          <button key={value} className={filter === value ? 'filter-pill active' : 'filter-pill'} onClick={() => setFilter(value)}>{label}</button>
+      <section className="home-controls">
+        <div className="home-view-toggle" aria-label="首页展示方式">
+          <button className={viewMode === 'status' ? 'active' : ''} onClick={() => changeViewMode('status')}>按状态</button>
+          <button className={viewMode === 'category' ? 'active' : ''} onClick={() => changeViewMode('category')}>按分类</button>
+        </div>
+        <label className="sort-control">
+          <ArrowDownUp size={17} />
+          <select value={sort} onChange={(event) => setSort(event.target.value as Sort)} aria-label="资产排序规则">
+            {sortOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </label>
+      </section>
+
+      <section className="filter-row" aria-label={viewMode === 'status' ? '按状态筛选' : '按分类筛选'}>
+        {filterOptions.map((option) => (
+          <button key={option.value} className={filter === option.value ? 'filter-pill active' : 'filter-pill'} onClick={() => setFilter(option.value)}>{option.label}</button>
         ))}
-        <button className="filter-pill sort-button" onClick={cycleSort} title={`当前排序：${sort}`}><ArrowDownUp size={19} /></button>
       </section>
 
       <div className="asset-list">

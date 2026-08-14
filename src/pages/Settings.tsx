@@ -1,30 +1,16 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { DatabaseBackup, Download, LogOut, Plus, ShieldCheck, Trash2, Upload } from 'lucide-react'
-import { db, exportData, importData } from '../db'
+import { DatabaseBackup, Download, LogOut, ShieldCheck, Trash2, Upload } from 'lucide-react'
+import { db, exportData, importData, resetLocalData } from '../db'
 import { useAuth } from '../auth-context'
 import { useCloudSync } from '../sync-context'
-import { uid } from '../utils'
-
-const categoryColors = ['#1d82ff', '#7c5cff', '#00a77b', '#ff7a59', '#ffb020', '#7b8496']
 
 export default function Settings() {
   const { user, logout } = useAuth()
   const { status, lastSyncedAt, message: syncMessage, syncNow } = useCloudSync()
-  const categories = useLiveQuery(() => db.categories.orderBy('createdAt').toArray(), []) ?? []
   const assets = useLiveQuery(() => db.assets.toArray(), []) ?? []
   const fileRef = useRef<HTMLInputElement>(null)
-  const [categoryName, setCategoryName] = useState('')
-  const [categoryIcon, setCategoryIcon] = useState('📦')
   const [message, setMessage] = useState('')
-
-  async function addCategory(event: FormEvent) {
-    event.preventDefault()
-    if (!categoryName.trim()) return
-    await db.categories.add({ id: uid('category'), name: categoryName.trim(), icon: categoryIcon || '📦', color: categoryColors[categories.length % categoryColors.length], createdAt: new Date().toISOString() })
-    setCategoryName('')
-    setCategoryIcon('📦')
-  }
 
   async function downloadBackup() {
     const blob = new Blob([JSON.stringify(await exportData(), null, 2)], { type: 'application/json' })
@@ -50,11 +36,9 @@ export default function Settings() {
   }
 
   async function clearAll() {
-    if (!window.confirm('确定清空全部资产、分类和心愿单吗？请先导出备份。')) return
-    await db.transaction('rw', db.assets, db.categories, db.wishes, async () => {
-      await Promise.all([db.assets.clear(), db.categories.clear(), db.wishes.clear()])
-    })
-    setMessage('本地数据已清空。')
+    if (!window.confirm('确定清空全部资产和心愿单吗？请先导出备份。')) return
+    await resetLocalData()
+    setMessage('数据已清空，默认分类已恢复。')
   }
 
   return (
@@ -64,12 +48,6 @@ export default function Settings() {
       {syncMessage && <div className="sync-warning">{syncMessage}</div>}
       {lastSyncedAt && <p className="last-sync-time">上次同步：{new Date(lastSyncedAt).toLocaleString('zh-CN')}</p>}
       {message && <button className="message-banner" onClick={() => setMessage('')}>{message}</button>}
-
-      <section className="settings-card">
-        <div className="settings-title"><div><h2>分类管理</h2><p>用自己的方式整理物品</p></div></div>
-        <div className="category-list">{categories.map((category) => <div className="category-row" key={category.id}><span style={{ background: `${category.color}18`, color: category.color }}>{category.icon}</span><strong>{category.name}</strong><small>{assets.filter((asset) => asset.categoryId === category.id).length} 件</small><button disabled={assets.some((asset) => asset.categoryId === category.id)} title="有物品的分类不能删除" onClick={() => void db.categories.delete(category.id)}><Trash2 size={17} /></button></div>)}</div>
-        <form className="category-form" onSubmit={addCategory}><input className="emoji-input" value={categoryIcon} onChange={(event) => setCategoryIcon(event.target.value)} maxLength={4} aria-label="分类图标" /><input value={categoryName} onChange={(event) => setCategoryName(event.target.value)} placeholder="新分类名称" /><button><Plus /></button></form>
-      </section>
 
       <section className="settings-card data-card">
         <div className="settings-title"><div><h2>数据与备份</h2><p>自动同步到云端，同时保留本地缓存</p></div><DatabaseBackup /></div>
