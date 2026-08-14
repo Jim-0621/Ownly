@@ -15,7 +15,8 @@ interface UserRow extends AuthUser {
 
 const COOKIE_NAME = 'ownly_session'
 const SESSION_DAYS = 30
-const PASSWORD_ITERATIONS = 310_000
+// Cloudflare Workers rejects PBKDF2 iteration counts above 100,000.
+const PASSWORD_ITERATIONS = 100_000
 const encoder = new TextEncoder()
 
 function bytesToBase64(bytes: Uint8Array) {
