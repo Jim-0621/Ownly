@@ -9,7 +9,7 @@ import type { Asset, AssetExpense, Category } from '../types'
 import { dailyCost, money, netCost, ownedDays } from '../utils'
 
 type ViewMode = 'status' | 'category'
-type Sort = 'value' | 'days' | 'daily'
+type Sort = 'value' | 'days' | 'purchaseDate' | 'daily'
 type SortDirection = 'desc' | 'asc'
 
 const EMPTY_ASSETS: Asset[] = []
@@ -24,6 +24,7 @@ const statusFilters = [
 const sortLabels: Record<Sort, Record<SortDirection, string>> = {
   value: { desc: '金额从高到低', asc: '金额从低到高' },
   days: { desc: '使用天数从长到短', asc: '使用天数从短到长' },
+  purchaseDate: { desc: '购买日期从晚到早', asc: '购买日期从早到晚' },
   daily: { desc: '日均从高到低', asc: '日均从低到高' },
 }
 
@@ -52,6 +53,7 @@ export default function Home() {
       let comparison = dailyCost(b, expenses) - dailyCost(a, expenses)
       if (sort === 'value') comparison = b.purchasePrice - a.purchasePrice
       if (sort === 'days') comparison = ownedDays(b) - ownedDays(a)
+      if (sort === 'purchaseDate') comparison = b.purchaseDate.localeCompare(a.purchaseDate)
       return sortDirection === 'desc' ? comparison : -comparison
     })
   }, [assets, expenses, filter, query, sort, sortDirection, viewMode])
