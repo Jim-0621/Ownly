@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Area, AreaChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { db, getCategories } from '../db'
-import { dailyCost, daysInclusive, money, today } from '../utils'
+import { dailyCost, daysInclusive, money, netCost, today } from '../utils'
 import type { Asset, AssetExpense, Category } from '../types'
 
 type Range = 'week' | 'month' | 'year' | 'all'
@@ -64,7 +64,7 @@ export default function Stats() {
   const trend = useMemo(() => trendData(assets, expenses, range), [assets, expenses, range])
   const categoryData = categories.map((category) => ({
     name: category.name,
-    value: assets.filter((asset) => asset.categoryId === category.id).reduce((sum, asset) => sum + asset.purchasePrice, 0),
+    value: assets.filter((asset) => asset.categoryId === category.id).reduce((sum, asset) => sum + netCost(asset, expenses), 0),
     color: category.color,
   })).filter((item) => item.value > 0)
 

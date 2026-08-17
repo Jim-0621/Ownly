@@ -51,7 +51,7 @@ export default function Home() {
     })
     return filtered.sort((a, b) => {
       let comparison = dailyCost(b, expenses) - dailyCost(a, expenses)
-      if (sort === 'value') comparison = b.purchasePrice - a.purchasePrice
+      if (sort === 'value') comparison = netCost(b, expenses) - netCost(a, expenses)
       if (sort === 'days') comparison = ownedDays(b) - ownedDays(a)
       if (sort === 'purchaseDate') comparison = b.purchaseDate.localeCompare(a.purchaseDate)
       return sortDirection === 'desc' ? comparison : -comparison

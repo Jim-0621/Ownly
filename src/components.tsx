@@ -4,7 +4,7 @@ import { AssetIcon, normalizeAssetIcon } from './asset-icons'
 import { useAuth } from './auth-context'
 import { useCloudSync } from './sync-context'
 import type { Asset, AssetExpense, Category } from './types'
-import { dailyCost, money, ownedDays, statusMeta } from './utils'
+import { dailyCost, money, netCost, ownedDays, statusMeta } from './utils'
 
 const navItems = [
   { to: '/', label: '首页', icon: Box, end: true },
@@ -52,7 +52,7 @@ export function AssetCard({ asset, category, expenses = [] }: { asset: Asset; ca
       <div className="asset-main">
         <strong>{asset.name}</strong>
         <div className="asset-cost-line">
-          <span className="asset-price">{money(asset.purchasePrice)} ·</span>
+          <span className="asset-price">{money(netCost(asset, expenses))} ·</span>
           <span className="asset-daily">{money(dailyCost(asset, expenses))}/天</span>
         </div>
       </div>

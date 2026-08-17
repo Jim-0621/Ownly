@@ -2,6 +2,8 @@
 
 Ownly 是一个个人资产管理网页应用，用来记录物品、购买成本、使用天数、日均成本和心愿单。
 
+如果希望从技术人员视角系统了解项目架构、数据模型、成本公式、登录同步和构建部署，请阅读 [Ownly 技术实现说明](docs/TECHNICAL_OVERVIEW.md)。
+
 当前版本采用“本地缓存 + Cloudflare D1 云同步”方案：
 
 - 每个用户通过用户名和密码登录，账号数据彼此隔离。
@@ -65,11 +67,10 @@ npx wrangler pages secret put REGISTRATION_CODE --project-name ownly
 ## 构建与部署
 
 ```powershell
-npm run build
 npm run deploy
 ```
 
-`npm run deploy` 会构建网页和 Pages Function，并部署到 `ownly` 项目的 `production` 分支。部署完成后访问：
+`npm run deploy` 内部会先执行完整构建，无需提前单独运行 `npm run build`；构建完成后会部署到 `ownly` 项目的 `production` 分支。部署完成后访问：
 
 ```text
 https://ownly.pages.dev
