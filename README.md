@@ -56,7 +56,7 @@ npm run dev:cloud
 
 ## 设置线上注册码
 
-注册码不要写进源码或提交到 Git。首次部署前，在终端交互输入：
+注册码不要写进源码或提交到 Git。首次部署前，在终端交互输入以下命令（注册码执行命令后填写）：
 
 ```powershell
 npx wrangler pages secret put REGISTRATION_CODE --project-name ownly
