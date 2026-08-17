@@ -64,6 +64,24 @@ npx wrangler pages secret put REGISTRATION_CODE --project-name ownly
 
 只有持有该注册码的人可以创建账号；已注册用户以后只需要用户名和密码。
 
+## 管理员人工重置密码
+
+忘记密码时，由已登录 Cloudflare Wrangler 的管理员在项目根目录执行：
+
+```powershell
+npm run admin:reset-password -- --remote
+```
+
+脚本会依次要求输入用户名、新密码并再次确认新密码。密码输入不会显示在终端，也不能通过命令行参数传入；操作线上 D1 时还必须输入 `RESET` 二次确认。重置成功后，该账号的全部旧会话都会失效，所有设备需要使用新密码重新登录。
+
+如需测试本地 D1，使用：
+
+```powershell
+npm run admin:reset-password -- --local
+```
+
+该功能直接通过 Wrangler 修改 D1，不提供公开的管理员 HTTP 接口，也不需要重新构建或部署网页。执行线上重置前请确认 `npx wrangler login` 登录的是正确的 Cloudflare 账号。
+
 ## 构建与部署
 
 ```powershell

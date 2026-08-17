@@ -493,6 +493,43 @@ categories + assets + wishes + expenses
 
 注册码只用于限制谁能创建账号，不参与后续登录，也不能代替用户密码。它不应写入源码、`.env` 或 Git 历史。
 
+#### 注册码存放与管理
+
+线上注册码保存在 Cloudflare 的 `ownly` Pages 项目配置中，类型为加密 Secret。它不在 Git 仓库、`wrangler.toml`、D1 数据库或浏览器中。Pages Function 运行时由 Cloudflare 将其注入为：
+
+```ts
+env.REGISTRATION_CODE
+```
+
+在 Cloudflare Dashboard 中可按以下路径找到变量名：
+
+```text
+Workers & Pages → ownly → Settings → Variables and Secrets → Production
+```
+
+控制台只会显示 `REGISTRATION_CODE` 这个名称，不会重新显示已保存的明文值。可用以下命令列出 Secret 名称：
+
+```powershell
+npx wrangler pages secret list --project-name ownly
+```
+
+修改线上注册码时执行：
+
+```powershell
+npx wrangler pages secret put REGISTRATION_CODE --project-name ownly
+npm run deploy
+```
+
+第一条命令会交互式要求输入新值，避免注册码出现在终端历史中；重新部署确保生产 Functions 使用新 Secret。生效后旧注册码不能再注册新用户，但已有用户、密码、会话和业务数据不受影响。
+
+本地联调使用项目根目录中不会提交到 Git 的 `.dev.vars`：
+
+```text
+REGISTRATION_CODE=本地测试注册码
+```
+
+`.dev.vars` 只供 `wrangler pages dev` 使用，与线上 Pages Secret 相互独立。
+
 ### 12.3 密码保存
 
 服务器不会保存明文密码，而是：
@@ -523,6 +560,69 @@ HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=30天
 - `Secure`：只通过 HTTPS 发送。
 - `SameSite=Strict`：减少跨站请求携带 Cookie。
 - 会话有效期为 30 天。
+
+### 12.5 管理员人工重置密码
+
+项目提供 `scripts/reset-password.mjs`，用于用户忘记密码时由管理员在本机重置。该能力不是 HTTP API，不会在公网暴露管理员入口；管理员凭证是本机 Wrangler 已登录的 Cloudflare 账号。
+
+线上重置命令为：
+
+```powershell
+npm run admin:reset-password -- --remote
+```
+
+脚本的安全处理包括：
+
+- 必须明确指定 `--remote` 或 `--local`，防止混淆线上和本地 D1。
+- 新密码只能在交互式终端中输入并以星号遮挡，不接受密码命令行参数。
+- 线上操作必须额外输入 `RESET` 确认。
+- 使用与登录系统相同的 PBKDF2-SHA256 参数重新生成随机 salt 和密码哈希。
+- 临时 SQL 文件写入系统临时目录，并在成功或失败后删除。
+- 更新密码后删除该用户的全部会话，使所有设备必须重新登录。
+
+这个脚本是管理员兜底能力，不等同于用户自助找回密码。它不需要新增 D1 字段，也不需要重新部署 Pages。
+
+#### Wrangler 管理员凭证
+
+这里的“管理员凭证”不是 Ownly 管理员账号、注册码或数据库密码，而是 Cloudflare 账号授权给 Wrangler 的 OAuth 凭证。执行：
+
+```powershell
+npx wrangler login
+```
+
+Wrangler 会打开浏览器，用户登录 Cloudflare 并同意授权后，OAuth 凭证保存在当前操作系统用户的 Wrangler 配置目录中。此后重置脚本调用 Wrangler，Wrangler 使用该凭证请求 Cloudflare D1 API；Cloudflare 根据账号是否拥有 `ownly-db` 权限决定是否允许操作。
+
+```text
+reset-password.mjs
+        ↓
+本机 Wrangler OAuth 凭证
+        ↓
+Cloudflare 权限校验
+        ↓
+ownly-db
+```
+
+`wrangler.toml` 中的 `database_id` 只是定位数据库，不是访问凭证。仅获得源码和数据库 ID 的人无法修改线上 D1。注册码同样不能换取 D1 管理权限。
+
+更换开发电脑时不需要复制旧电脑上的 OAuth 文件，推荐在新电脑重新授权：
+
+```powershell
+git clone https://github.com/Jim-0621/Ownly.git
+cd Ownly
+npm install
+npx wrangler login
+npx wrangler whoami
+```
+
+`whoami` 用于确认当前登录的是拥有 Ownly 项目的正确 Cloudflare 账号。确认后即可执行：
+
+```powershell
+npm run admin:reset-password -- --remote
+```
+
+真正需要长期保管的是 Cloudflare 登录账号、密码、两步验证设备和恢复码。旧电脑丢失或不再使用时，应在 Cloudflare 侧撤销旧的 Wrangler/OAuth 授权，并在新电脑重新登录。不要把本机 OAuth 文件复制进项目或提交到 Git。
+
+自动化环境也可以使用权限受限的 Cloudflare API Token，但当前人工重置场景优先使用交互式 `wrangler login`，避免额外保存长期 Token。
 
 ## 13. 云同步机制
 
@@ -642,7 +742,7 @@ user_id, payload, version, updated_at
 - 快照校验主要检查顶层结构，还没有逐字段验证每一件资产的完整类型。
 - 750,000 限制按 JavaScript 字符串长度判断，并非严格的网络字节数。
 - 数据在 HTTPS 连接中加密传输，D1 中的业务快照本身不是应用层加密密文。
-- 系统没有找回密码、修改密码、管理员后台、登录限流和多因素认证。
+- 系统没有用户自助找回/修改密码、管理员后台、登录限流和多因素认证；忘记密码只能由具备 Cloudflare 权限的管理员通过本机脚本重置。
 - 当前适合私人、小范围使用，不应未经加固直接作为公开多租户产品。
 
 ## 16. PWA 与缓存策略
@@ -777,7 +877,7 @@ npm run deploy
 
 - 云同步为整份 JSON 最后写入覆盖，没有冲突合并。
 - 业务数据未做应用层加密，Cloudflare D1 管理侧可以读取快照。
-- 没有密码修改、密码找回、账号删除和管理员界面。
+- 没有用户自助密码修改/找回、账号删除和管理员界面，仅提供本机管理员重置脚本。
 - 没有操作历史或误删恢复；删除前应保留 JSON 备份。
 - D1 不能直接按资产、费用维度做服务端统计，因为业务数据保存在 JSON 中。
 - 统计和详情曲线适合个人概览，不是会计账簿或严格现金流报表。
@@ -787,7 +887,7 @@ npm run deploy
 
 如果继续开发，建议按以下顺序考虑：
 
-1. 增加修改密码、注销其他会话和账号删除。
+1. 增加用户自助修改密码、注销其他会话和账号删除。
 2. 为同步加入版本号条件更新，至少在覆盖前提示冲突。
 3. 为 JSON 快照增加严格的逐字段 schema 校验。
 4. 增加自动或定期历史快照，提供误删恢复。

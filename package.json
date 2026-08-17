@@ -13,6 +13,7 @@
     "build": "npm run build:web && npm run typecheck:functions && npm run build:functions",
     "db:migrate:local": "wrangler d1 migrations apply ownly-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply ownly-db --remote",
+    "admin:reset-password": "node scripts/reset-password.mjs",
     "deploy": "npm run build && wrangler pages deploy dist --project-name ownly --branch production",
     "lint": "oxlint",
     "preview": "vite preview"
